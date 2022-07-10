@@ -1,0 +1,1099 @@
+//Sound variables
+var homeAudio= "sound://category_loops/red_flag_loop1.mp3";
+var defeatSound="sound://category_digital/failure.mp3";
+var victorySound="sound://category_achievements/retro_game_classic_power_up_3.mp3";
+var gameAudio="sound://category_background/progression.mp3";
+var buttonClick= "sound://category_app/app_button_5.mp3";
+var cardFlip="sound://category_board_games/card_flipping.mp3";
+var hoverSound="sound://category_loops/vibrant_game_whispy_wonder_loop_1.mp3";
+var audioOption=0;
+var gameAudioOption=0;
+
+//Lists
+var imageList=["AS.png","AH.png","AD.png","AC.png","KS.png","KH.png","KD.png","KC.png","QS.png","QH.png","QD.png","QC.png","JS.png","JH.png","JD.png","JC.png","10S.png","9S.png","8S.png","7S.png","6S.png","5S.png","4S.png","3S.png","2S.png","10H.png","9H.png","8H.png","7H.png","6H.png","5H.png","4H.png","3H.png","2H.png","10D.png","9D.png","8D.png","7D.png","6D.png","5D.png","4D.png","3D.png","2D.png","10C.png","9C.png","8C.png","7C.png","6C.png","5C.png","4C.png","3C.png","2C.png"];
+var valueList=[14,14,14,14,13,13,13,13,12,12,12,12,11,11,11,11,10,9,8,7,6,5,4,3,2,10,9,8,7,6,5,4,3,2,10,9,8,7,6,5,4,3,2,10,9,8,7,6,5,4,3,2];
+var nameList=["Ace Spades","Ace Hearts", "Ace Diamonds","Ace Clubs","King Spades","King Hearts","King Diamonds","King Clubs","Queen Spades","Queen Hearts","Queen Diamonds","Queen Clubs","Jack Spades","Jack Hearts","Jack Diamonds","Jack Clubs","10 Spades","9 Spades","8 Spades","7 Spades","6 Spades","5 Spades","4 Spades","3 Spades","2 Spades","10 Hearts","9 Hearts","8 Hearts","7 Hearts","6 Hearts","5 Hearts","4 Hearts","3 Hearts","2 Hearts","10 Diamonds","9 Diamonds","8 Diamonds","7 Diamonds","6 Diamonds","5 Diamonds","4 Diamonds","3 Diamonds","2 Diamonds","10 Clubs","9 CLubs","8 Clubs","7 Clubs","6 Clubs","5 Clubs","4 Clubs","3 Clubs","2 Clubs"];
+var imageTrash=[];
+var nameTrash=[];
+var valueTrash=[];
+
+
+var playerImageHand=[];
+var playerValueHand=[];
+var playerNameHand=[];
+
+var computerImageHand=[];
+var computerValueHand=[];
+var computerNameHand=[];
+
+//Game variables
+var computer=10;
+var player=10;
+var pNum=0;
+var oNum=0;
+var turn=0;
+
+//LeaderBoard variables
+var currentSlot="";
+var totalTime=0;
+var currentId;
+var stop;
+var timeBegin;
+var timeEnd;
+
+
+//Start game music
+playSound(homeAudio,true);
+
+
+//BEGINNING OF ON EVENTS THAT ALTER GAME *******
+
+  //Game Begins when this button is clicked
+onEvent("playButton", "click", function( ) {
+  
+    
+    //screen and sound change
+    setScreen("game");  
+    stopSound(homeAudio);
+    
+    if(audioOption%2==0)
+    {
+      playSound(buttonClick);
+      playSound(gameAudio,true);
+    }
+    
+    //timer for leaderBoard begins 
+    timeBegin=getTime();
+    
+    //makes sure name variable isn't blank
+    if(getText("nameInput")!="")
+    {
+      setProperty("playerLabel","text",getText("nameInput"));
+    }
+    
+    //function to draw the hands of opp and player
+    drawCards();
+});
+
+  //The turn plays out when this button is clicked
+onEvent("playTurnButton", "click", function( ) {
+    
+    //sound & variables/ setup
+    turn++;
+    
+    //boolean to stop multiple if states from running
+    var breaks=false;
+    
+    if(gameAudioOption%2==0)
+    {
+      playSound(cardFlip);
+    }
+    
+    //makes sure name isn't blank
+    if(getText("nameInput")!="")
+    {
+      setProperty("playerTurnLabel","text",getText("nameInput"));
+    }
+    
+    
+    //resets index of both hands. aka: When players pick back up their pile...
+    if(oNum>=computer)
+    {
+      oNum=0;
+    }
+    
+    if(pNum>=player)
+    {
+      pNum=0;
+    }
+    
+    //sets elements of the screen 
+    setProperty("playedPlayerCard","image",playerImageHand[pNum]);
+    setProperty("playerName","text","Name: "+playerNameHand[pNum]);
+    setProperty("playerValue","text","Value: "+playerValueHand[pNum]);
+    
+    setProperty("playedComputerCard","image",computerImageHand[oNum]);
+    setProperty("opponentName","text","Name: "+computerNameHand[oNum]);
+    setProperty("opponentValue","text","Value: "+computerValueHand[oNum]);    
+    
+    //then sets screen to turn screen
+    setScreen("turnScreen");
+    
+    //beginning of "if" scenarios
+    if(breaks==false)
+    {
+      //if player card has greater value...(player wins round)
+      if(computerValueHand[oNum]<playerValueHand[pNum])
+      {
+        //property/sound
+        setProperty("turnWinner","text","Winner: The winner of the round is "+getText("nameInput")+"! The "+playerNameHand[pNum]+" has a greater value than the "+computerNameHand[oNum]+".");        
+        
+        if(gameAudioOption%2==0)
+        {
+          playSound(victorySound);
+        }
+        
+        //game variables changing...
+        player++;
+        computer--;
+        breaks=true;
+        
+        //transfer cards then remove 
+        appendItem(playerValueHand,computerValueHand[oNum]);
+        removeItem(computerValueHand,oNum);
+      
+        appendItem(playerNameHand,computerNameHand[oNum]);
+        removeItem(computerNameHand,oNum);
+      
+        appendItem(playerImageHand,computerImageHand[oNum]);
+        removeItem(computerImageHand,oNum);        
+      }
+    }
+    
+    if(breaks==false)
+    {
+      if(computerValueHand[oNum]>playerValueHand[pNum])
+      {
+        //property/sound
+        setProperty("turnWinner","text","Winner: The winner of the round is the opponent:( The "+ computerNameHand[oNum]+" has a greater value than the "+playerNameHand[pNum]+".");        
+        
+        if(gameAudioOption%2==0)
+        {
+          playSound(defeatSound);
+        }
+        
+        //game variables changing
+        computer++;
+        player--;
+        breaks=true;
+        
+        //transfer and remove cards 
+        appendItem(computerValueHand,playerValueHand[pNum]);
+        removeItem(playerValueHand,pNum);
+      
+        appendItem(computerNameHand,playerNameHand[pNum]);
+        removeItem(playerNameHand,pNum);
+      
+        appendItem(computerImageHand,playerImageHand[pNum]);
+        removeItem(playerImageHand,pNum);
+              
+        
+      }
+    }
+    
+    if(breaks==false)
+    {
+      if(computerValueHand[oNum]==playerValueHand[pNum])
+      {
+      /*
+        we do not want a battle to occur as the winning turn or
+        when there is less than 3 cards
+      */
+        if(player>3&&computer>3)
+        {
+          //setup
+          setScreen("battleScreen");
+          showElement("flipButton");
+          hideElement("returnButton3");
+          
+          if(gameAudioOption%2==0)
+          {
+            playSound("sound://category_explosion/8bit_explosion.mp3");
+          }
+          
+          //setting elements
+          setProperty("opponentBattleCard","image","unnamed-(5).jpg");
+          setProperty("playerBattleCard","image","unnamed-(4).jpg");
+          setProperty("opponentPlayedCard","image",computerImageHand[oNum]);
+          setProperty("playerPlayedCard","image",playerImageHand[pNum]);
+          setProperty("playerLabels","text",getText("nameInput"));
+        }else//can't do battle
+        {
+          setScreen("turnScreen");
+          setProperty("turnWinner","text","Battle not available at this time... replay the turn");          
+        }
+      }
+    }
+    
+    //increase index
+    oNum++;
+    pNum++;
+    
+    //set cards num for players
+    setProperty("oCardNum","text","Cards: "+computer);
+    setProperty("pCardNum","text","Cards: "+player);
+});
+  
+  //this button when clicked activated the battle round
+onEvent("flipButton", "click", function( ) {
+      
+      //sound
+      if(gameAudioOption%2==0)
+      {
+        playSound(cardFlip);
+      }
+      
+      //first, runs battle
+      battle();
+      
+      //then, updates card nums
+      setProperty("oCardNum","text","Cards: "+computer);
+      setProperty("pCardNum","text","Cards: "+player);
+      
+      //after card if clicked, it goes away:(
+      hideElement("flipButton");
+});
+
+  //cards are shuffled once when this card is clicked
+onEvent("shuffleButton", "click", function( ) {
+    shuffle();
+    
+    if(gameAudioOption%2==0)
+    {
+       playSound("sound://category_board_games/card_dealing_multiple.mp3");
+    }
+    setScreen("shuffleScreen");
+    //goes away:(
+    hideElement("shuffleButton");
+});
+
+  //every time turn is returned, winner is checked
+onEvent("returnButton1", "click", function( ) {
+ 
+ //doesn't check unless someone has lost
+  if(computer<=0||player<=0)
+  {
+    winner();
+  }
+  else
+  {
+    setScreen("game");
+  }
+  
+  //sound
+  if(gameAudioOption%2==0){
+  playSound(buttonClick);
+  }
+  
+  setProperty("turnWinner","text","Winner: ");
+});
+
+  //return for the battle. Does same thing as previous...
+onEvent("returnButton3", "click", function( ) {
+  
+  //doesn't unless someone has lost
+  if(computer<=0||player<=0){
+  winner();
+  }
+  else
+  {
+    setScreen("game");
+  }
+  
+  //sound
+  if(gameAudioOption%2==0){
+  playSound(buttonClick);
+  }
+  
+  //reset assets
+  setProperty("opponentDownCard","image","unnamed-(5).jpg");
+  setProperty("playerDownCard","image","unnamed-(4).jpg");
+  setProperty("winnerLabel","text","Winner: ");
+});
+
+
+//leaderBoard on event
+onEvent("leaderBoardButton", "click", function( ) {
+    //setup
+    setScreen("leaderBoardScreen");
+    
+    //create record
+    var leaderBoard={};
+    
+    //name, turns, and time lists
+    leaderBoard.turns=turn;
+    leaderBoard.totalTime=totalTime;
+    
+    if(getText("nameInput").length>19)
+    {
+      leaderBoard.name=getText("nameInput").substring(0,19);
+    }
+   
+    if(getText("nameInput")=="")
+    {
+      leaderBoard.name="player";
+    
+    }
+    else
+    {
+     
+    leaderBoard.name=getText("nameInput");
+
+    }
+    
+    //CREATES RECORD
+    
+    createRecord("leaderBoard", leaderBoard, function(record) {
+        console.log("Record created with id: "+record.id);
+       currentId=record.name;
+        console.log("Name: "+record.name+" Turns: "+record.turns+" Time: "+record.totalTime);
+    });
+    
+    //after creating record, it updates the high scores
+    highScores();
+});
+
+
+//END OF ON EVENTS THAT ALTER GAME ********
+
+
+//START OF FUNCTIONS &&&&&&&&&&
+
+  //draw cards function - beginning game
+  function drawCards()
+  {
+    //adds to player hand 
+    for(var u=0;u<10;u++)
+  {
+    var num= randomNumber(0,valueList.length-1);
+    
+    appendItem(playerValueHand,valueList[num]);
+    appendItem(valueTrash,valueList[num]);
+    removeItem(valueList,num);
+    
+    appendItem(playerNameHand,nameList[num]);
+    appendItem(nameTrash,nameList[num]);
+    removeItem(nameList,num);
+    
+    appendItem(playerImageHand,imageList[num]);
+    appendItem(imageTrash,imageList[num]);
+    removeItem(imageList,num);
+    
+  }
+  
+  
+  //add to computer hand.
+  for(var j=0;j<10;j++)
+  {
+    var num1=randomNumber(0,valueList.length-1);
+    
+    appendItem(computerValueHand,valueList[num1]);
+    appendItem(valueTrash,valueList[num1]);
+    removeItem(valueList,num1);
+    
+    appendItem(computerNameHand,nameList[num1]);
+    appendItem(nameTrash,nameList[num1]);
+    removeItem(nameList,num1);
+    
+    appendItem(computerImageHand, imageList[num1]);
+    appendItem(imageTrash,imageList[num1]);
+    removeItem(imageList,num1);
+    
+  }
+  
+}
+
+    //shuffle function- once per game
+function shuffle()
+{
+  //player shuffle
+    //removes cards from player
+    for(var i=0;i<player-1;i++)
+  {
+ 
+    removeItem(playerValueHand,0);
+    removeItem(playerNameHand,0);
+    removeItem(playerImageHand,0);
+  }
+  
+    //adds random cards back to player
+  for(var j=0;j<player-1;j++)
+  {
+    var r1= randomNumber(0,valueList.length-1);
+    
+    appendItem(playerValueHand,valueList[r1]);
+    appendItem(playerNameHand,nameList[r1]);
+    appendItem(playerImageHand,imageList[r1]);
+    
+    appendItem(imageTrash,imageList[r1]);
+    appendItem(nameTrash,nameList[r1]);
+    appendItem(valueTrash,valueList[r1]);
+    
+    removeItem(valueList,r1);
+    removeItem(nameList,r1);
+    removeItem(imageList,r1);
+  }
+  
+  //computer shuffle
+  
+//removes cards from comp  
+for(var x=0;x<computer-1;x++)
+  {
+    removeItem(computerValueHand,0);
+    removeItem(computerNameHand,0);
+    removeItem(computerImageHand,0);
+  }
+  
+  //adds cards back to comp random
+  for(var y=0;y<computer-1;y++)
+  {
+    var r2=randomNumber(0,valueList.length-1);
+    
+    appendItem(computerValueHand,valueList[r2]);
+    appendItem(computerNameHand,nameList[r2]);
+    appendItem(computerImageHand,imageList[r2]);
+    
+    appendItem(valueTrash,valueList[r2]);
+    appendItem(imageTrash,imageList[r2]);
+    appendItem(nameTrash,nameList[r2]);
+    
+    removeItem(imageList,r2);
+    removeItem(nameList,r2);
+    removeItem(valueList,r2);
+  }
+}
+
+
+//battle function- occurs when a battle happens
+
+function battle()
+{
+  //elements/ variables
+  showElement("returnButton3");
+  
+  var p1;
+  var c1;
+  var mp1;
+  var mc1;
+  var breaks1=false;
+  
+  
+  
+  //same concept for regular turn
+  if(oNum>=computer)
+  {
+    oNum=0;
+  }
+  
+  if(pNum>=player)
+  {
+    pNum=0;
+  }
+  
+  //loop and a halfs to get valid random nums
+  while(true)
+  {
+    mp1=randomNumber(0,playerImageHand.length-3);
+    
+    if(mp1!=pNum)
+    {
+      break;
+    }
+  }
+  
+  while(true)
+  {
+    mc1=randomNumber(0,computerImageHand.length-3);
+    
+    if(mc1!=oNum)
+    {
+      break;
+    }
+  }
+  
+  while(true){
+  p1= randomNumber(0,playerImageHand.length-2);
+    if(p1!=pNum&&p1!=mp1)
+    {
+      break;
+    }
+  }
+  
+  while(true){
+   c1= randomNumber(0,computerImageHand.length-2);
+   
+   if(c1!=oNum&&c1!=mc1)
+   {
+     break;
+   }
+  }
+  
+  //sets properties given random nums
+  setProperty("opponentBattleCard","image",computerImageHand[c1]);
+  setProperty("playerBattleCard","image",playerImageHand[p1]);
+  setProperty("opponentDownCard","image",computerImageHand[mc1]);
+  setProperty("playerDownCard","image",playerImageHand[mp1]);
+  
+  //same concept as turn
+  if(breaks1==false)
+  {
+    //we are comparing p1 and c1
+    if(computerValueHand[c1]>playerValueHand[p1])
+    {
+      //variables 
+      computer+=3;
+      player-=3;
+      
+      //sound
+      if(gameAudioOption%2==0)
+      {
+        playSound(defeatSound);
+      }
+      
+      //alert user
+      setProperty("winnerLabel","text","Winner: The winner of the battle round is the opponent :( The "+computerNameHand[c1]+" has a greater value than "+playerNameHand[p1]);
+      
+      //remove and transfer x3
+      
+      appendItem(computerValueHand,playerValueHand[mp1]);
+    appendItem(computerNameHand,playerNameHand[mp1]);
+    appendItem(computerImageHand,playerImageHand[mp1]);
+    
+    appendItem(computerValueHand,playerValueHand[pNum]);
+    appendItem(computerImageHand,playerImageHand[pNum]);
+    appendItem(computerNameHand,playerNameHand[pNum]);
+    
+    appendItem(computerValueHand,playerValueHand[p1]);
+    appendItem(computerNameHand,playerNameHand[p1]);
+    appendItem(computerImageHand,playerImageHand[p1]);
+    
+    removeItem(playerValueHand,pNum);
+    removeItem(playerNameHand,pNum);
+    removeItem(playerImageHand,pNum);
+    
+    removeItem(playerNameHand,p1);
+    removeItem(playerValueHand,p1);
+    removeItem(playerImageHand,p1);
+    
+    removeItem(playerValueHand,mp1);
+    removeItem(playerNameHand,mp1);
+    removeItem(playerImageHand,mp1);
+    
+    breaks1=true;
+    }
+  }
+  
+  if(breaks1==false)
+  {
+    if(computerValueHand[c1]<playerValueHand[p1])
+    {
+      //vars
+      computer-=3;
+      player+=3;
+      
+      //sound
+      if(gameAudioOption%2==0)
+      {
+        playSound(victorySound);
+      }
+      
+      //alert
+      setProperty("winnerLabel","text","Winner: The winner of the battle round is "+getText("nameInput")+"! The "+playerNameHand[p1]+" has a greater value than the "+computerNameHand[c1]);
+      
+      
+      //transfer and remove x3
+      
+      appendItem(playerNameHand,computerNameHand[mc1]);
+    appendItem(playerValueHand, computerValueHand[mc1]);
+    appendItem(playerImageHand,computerImageHand[mc1]);
+    
+    appendItem(playerNameHand,computerNameHand[c1]);
+    appendItem(playerValueHand,computerValueHand[c1]);
+    appendItem(playerImageHand, computerImageHand[c1]);
+    
+    appendItem(playerNameHand,computerNameHand[oNum]);
+    appendItem(playerImageHand,computerImageHand[oNum]);
+    appendItem(playerValueHand,computerValueHand[oNum]);
+    
+    removeItem(computerValueHand,oNum);
+    removeItem(computerNameHand,oNum);
+    removeItem(computerImageHand,oNum);
+    
+    removeItem(computerValueHand,c1);
+    removeItem(computerNameHand,c1);
+    removeItem(computerImageHand,c1);
+    
+    removeItem(computerImageHand,mc1);
+    removeItem(computerNameHand,mc1);
+    removeItem(computerValueHand,mc1);
+    breaks1=true;
+    }
+  }
+  
+  if(breaks1==false)
+  {
+    //IN EVENT OF DOUBLE BATTLE, WE REPLAY ROUND
+    //This is due to lack of size of hands(10 each).
+    if(computerValueHand[c1]==playerValueHand[p1])
+    {
+      setScreen("turnScreen");
+      setProperty("turnWinner","text","Winner: The double battle cancels out the round. It is a tie. Replay the round");
+    }
+  }
+  
+}
+
+
+//winner function
+
+function winner()
+{
+  //setup
+  setScreen("shuffleScreen");
+  
+  //if player loses...
+  if(player<=0)
+  {
+    //stops game timer
+    timeEnd=getTime();
+    
+    //alert/sound
+    
+    setProperty("shuffleText","text","The winner of the game is the opponent :(");
+    
+    if(gameAudioOption%2==0)
+    {
+      playSound(defeatSound);
+    }
+    showElement("losePlayAgain");
+  }
+  
+  //if player wins
+  if(computer<=0)
+  {
+    timeEnd=getTime();
+    
+    setProperty("shuffleText","text","The winner of the game is "+getText("nameInput")+"!");
+   
+    if(gameAudioOption%2==0)
+    {
+     playSound(victorySound);
+    }
+    
+    //gets time
+    totalTime=timeEnd-timeBegin;
+    
+    //only shows if player wins
+    showElement("timeTurn");
+    showElement("leaderBoardButton");
+    
+    //print time
+    setProperty("timeTurn","text","Time/Turn: "+totalTime+ "ms / "+turn);
+  }
+}
+
+
+
+//highScore function
+
+function highScores(){
+  
+    //Open the existing Top 10 score data set
+    
+    readRecords("highScores", {}, function(records) {
+      
+        //Assuming they are a loser and didn't get a high score
+        //Only necessary because I have different things occur when you get a high score or not
+    
+        
+        
+        //The stop variable checks to see if there are 1st, then 2nd, then 3rd... and stops when a spot is found
+        stop = "false";
+        
+        //Iterates through high scores 1-5
+        for(var i = 1; i <=10; i++){
+          
+          //Checks if high score was reached and what position
+          //The minus 1 is because arrays start at index (position) zero
+          //.score is the name of the column that the score values are in
+          
+          if(totalTime < records[i-1].totalTime && stop != "true"){
+             
+             //Ensures you don't replace all lower scores
+             //Makes sure you only run this code once
+             
+             stop = "true";
+            
+            //Move previous entries down
+            
+            for(var j = 10; j >i-1; j--){
+              
+              //So you don't access record -1, which doesn't exist
+              if(j != 1){
+              
+              //Chosing to upgrade the lowest record remaining with the second lowest record remaining  
+              var updatedRecord = records[j-1];
+              updatedRecord.name = records[j-2].name;
+              updatedRecord.totalTime = records[j-2].totalTime;
+              updatedRecord.turns=records[j-2].turns;
+              
+             
+              updateRecord("highScores", updatedRecord, function(record, success) {
+                 console.log(record);
+                if (success) console.log("Record updated with id:" +record.id);
+                else console.log("Record NOT updated");
+              }); 
+              }
+            }
+            //All records are now moved down one and the place you are going to be is still what it was
+            
+            //Update the correct entry with new score
+            var newRecord = records[i-1];
+            newRecord.name =getText("nameInput");
+            newRecord.totalTime=totalTime;
+            newRecord.turns=turn;
+            
+            updateRecord("highScores", newRecord, function(record, success) {
+              console.log(record+"   "+ record.id);
+              if (success) console.log("Record updated with id:" +record.id);
+              else console.log("Record NOT updated");
+            }); 
+            
+          
+          
+}
+}
+
+
+
+
+
+  for(var k = 1; k <= 10; k++){
+         currentSlot="slot"+k;
+          
+          //k-1 to make sure you access the correct array position
+       setText(currentSlot,k+") "+records[k-1].name+" / "+records[k-1].totalTime+" ms / "+records[k-1].turns+" turns.");
+        }
+
+});
+}
+
+//END OF FUNCTIONS &&&&&&&&
+
+
+//START OF SCREEN CHANGE AND DESIGN
+onEvent("flipButton", "mouseover", function( ) {
+  setProperty("flipButton","text-color",rgb(15,1,1));
+  setProperty("flipButton","background-color",rgb(27,144,238));
+  setProperty("flipButton","border-color",rgb(15,1,1));
+});
+
+onEvent("flipButton", "mouseout", function( ) {
+  setProperty("flipButton","text-color",rgb(27,144,238));
+  setProperty("flipButton","background-color",rgb(15,1,1));
+  setProperty("flipButton","border-color",rgb(27,144,238));
+});
+
+onEvent("returnButton3", "mouseover", function( ) {
+  setProperty("returnButton3","text-color",rgb(15,1,1));
+  setProperty("returnButton3","background-color",rgb(27,144,238));
+  setProperty("returnButton3","border-color",rgb(15,1,1));
+});
+
+onEvent("returnButton3", "mouseout", function( ) {
+  setProperty("returnButton3","text-color",rgb(27,144,238));
+  setProperty("returnButton3","background-color",rgb(15,1,1));
+  setProperty("returnButton3","border-color",rgb(27,144,228));
+});
+
+onEvent("returnButton1", "mouseover", function( ) {
+  
+  
+    setProperty("returnButton1","text-color",rgb(15,1,1));
+    setProperty("returnButton1","background-color",rgb(27,144,238));
+    setProperty("returnButton1","border-color",rgb(15,1,1));
+});
+
+onEvent("returnButton1", "mouseout", function( ) {
+  setProperty("returnButton1","text-color",rgb(27,144,238));
+  setProperty("returnButton1","background-color",rgb(15,1,1));
+  setProperty("returnButton1","border-color",rgb(27,144,238));
+
+});
+
+
+onEvent("playTurnButton", "mouseover", function( ) {
+    setProperty("playTurnButton","text-color",rgb(15,1,1));
+    setProperty("playTurnButton","background-color",rgb(27,144,238));
+    setProperty("playTurnButton","border-color",rgb(15,1,1));
+    
+});
+
+onEvent("playTurnButton", "mouseout", function( ) {
+    setProperty("playTurnButton","text-color",rgb(27,144,238));
+    setProperty("playTurnButton","background-color",rgb(15,1,1));
+    setProperty("playTurnButton","border-color",rgb(27,144,238));
+    
+});
+
+onEvent("shuffleScreen", "click", function( ) {
+  if(player>0&&computer>0)
+  {
+    setScreen("game");
+  }
+  if(gameAudioOption%2==0){
+  playSound(buttonClick);
+  }
+});
+
+
+onEvent("leaderBoardButton", "mouseover", function( ) {
+  console.log(imageTrash);
+  console.log(nameTrash);
+  console.log(valueTrash);
+    setProperty("leaderBoardButton","text-color",rgb(15,1,1));
+    setProperty("leaderBoardButton","background-color",rgb(27,144,238));
+    setProperty("leaderBoardButton","border-color",rgb(15,1,1));
+});
+
+onEvent("leaderBoardButton", "mouseout", function( ) {
+    setProperty("leaderBoardButton","text-color",rgb(27,144,238));
+    setProperty("leaderBoardButton","background-color",rgb(15,1,1));
+    setProperty("leaderBoardButton","border-color",rgb(27,144,238));
+});
+
+
+onEvent("shuffleButton", "mouseover", function( ) {
+  setProperty("shuffleButton","text-color",rgb(15,1,1));
+  setProperty("shuffleButton","background-color",rgb(27,144,238));
+  setProperty("shuffleButton","border-color",rgb(15,1,1));
+  
+});
+
+onEvent("shuffleButton", "mouseout", function( ) {
+  setProperty("shuffleButton","text-color",rgb(27,144,238));
+  setProperty("shuffleButton","background-color",rgb(15,1,1));
+  setProperty("shuffleButton","border-color",rgb(27,144,238));
+
+});
+
+
+
+onEvent("gameAudioOption","click",function(){
+  gameAudioOption++;
+  
+  if(gameAudioOption%2==0)
+  {
+    setProperty("gameAudioLabel","text","AUDIO ON");
+    playSound(gameAudio,true);
+  }
+  else
+  {
+    setProperty("gameAudioLabel","text","AUDIO OFF");
+    stopSound(gameAudio);
+  }
+});
+
+onEvent("audio","click",function()
+{
+  audioOption++;
+  gameAudioOption++;
+  
+  if(audioOption%2==0)
+  {
+    setProperty("audioLabel","text","AUDIO ON");
+    playSound(homeAudio,true);
+    
+  }
+  else
+  {
+    setProperty("audioLabel","text","AUDIO OFF");
+    stopSound(homeAudio);
+   
+  }
+});
+
+onEvent("rulesButton", "click", function( ) {
+  setScreen("rulesScreen");
+  if(audioOption%2==0){
+  playSound(buttonClick);
+  }
+});
+
+onEvent("returnButton", "click", function( ) {
+  setScreen("home");
+  if(audioOption%2==0){
+  playSound(buttonClick);
+  }
+});
+
+onEvent("returnButton", "mouseover", function( ) {
+   setProperty("returnButton", "text-color", rgb(15,1,1));
+   setProperty("returnButton", "background-color", rgb(27,144,238));
+   setProperty("returnButton", "border-color", rgb(15,1,1));
+   if(audioOption%2==0){
+   playSound(hoverSound);
+   }
+});
+
+onEvent("returnButton", "mouseout", function( ) {
+   setProperty("returnButton", "text-color", rgb(27,144,238));
+   setProperty("returnButton", "background-color", rgb(15,1,1));
+   setProperty("returnButton", "border-color", rgb(27,144,238));
+   stopSound(hoverSound);
+});
+
+
+onEvent("playButton", "mouseover", function( ) {
+   setProperty("playButton", "text-color", rgb(15,1,1));
+   setProperty("playButton", "background-color", rgb(27,144,238));
+   setProperty("playButton", "border-color", rgb(15,1,1));
+   if(audioOption%2==0){
+   playSound(hoverSound);
+   }
+});
+
+onEvent("playButton", "mouseout", function( ) {
+   setProperty("playButton", "text-color", rgb(27,144,238));
+   setProperty("playButton", "background-color", rgb(15,1,1));
+   setProperty("playButton", "border-color", rgb(27,144,238));
+   stopSound(hoverSound);
+});
+
+onEvent("winPlayAgain", "mouseover", function( ) {
+   setProperty("winPlayAgain", "text-color", rgb(15,1,1));
+   setProperty("winPlayAgain", "background-color", rgb(27,144,238));
+   setProperty("winPlayAgain", "border-color", rgb(15,1,1));
+});
+
+onEvent("winPlayAgain", "mouseout", function( ) {
+   setProperty("winPlayAgain", "text-color", rgb(27,144,238));
+   setProperty("winPlayAgain", "background-color", rgb(15,1,1));
+   setProperty("winPlayAgain", "border-color", rgb(27,144,238));
+});
+
+onEvent("losePlayAgain", "mouseover", function( ) {
+   setProperty("losePlayAgain", "text-color", rgb(15,1,1));
+   setProperty("losePlayAgain", "background-color", rgb(27,144,238));
+   setProperty("losePlayAgain", "border-color", rgb(15,1,1));
+});
+
+onEvent("losePlayAgain", "mouseout", function( ) {
+   setProperty("losePlayAgain", "text-color", rgb(27,144,238));
+   setProperty("losePlayAgain", "background-color", rgb(15,1,1));
+   setProperty("losePlayAgain", "border-color", rgb(27,144,238));
+});
+
+
+
+onEvent("rulesButton", "mouseover", function( ) {
+  setProperty("rulesButton","text-color",rgb(15,1,1));
+  setProperty("rulesButton","background-color",rgb(27,144,238));
+  setProperty("rulesButton","border-color",rgb(15,1,1));
+  if(audioOption%2==0){
+  playSound(hoverSound);
+  }
+});
+
+onEvent("rulesButton", "mouseout", function( ) {
+  setProperty("rulesButton","text-color",rgb(27,144,238));
+  setProperty("rulesButton","background-color",rgb(15,1,1));
+  setProperty("rulesButton","border-color",rgb(27,144,238));
+  stopSound(hoverSound);
+});  
+
+onEvent("nameInput", "input", function( ) {
+  if(audioOption%2==0){
+  playSound("sound://category_app/app_interface_button_3.mp3");
+  }
+  if(getText("nameInput").length>9)
+  {
+    hideElement("nameInput");
+    showElement("nameLimit");
+  }
+});
+
+//END OF DESIGN CODE 
+
+
+//START OF PLAY AGAIN
+
+onEvent("winPlayAgain", "click", function( ) {
+    resetGame();
+});
+
+onEvent("losePlayAgain", "click", function( ) {
+    setScreen("leaderBoardScreen");
+    if(gameAudioOption%2==0)
+    {
+      playSound(buttonClick);
+    }
+});
+
+function resetGame()
+{
+  setScreen("home");
+  
+  //name input reset
+  hideElement("nameLimit");
+  showElement("nameInput");
+  hideElement("leaderBoardButton");
+  
+  //show shuffle button
+  showElement("shuffleButton");
+  setText("shuffleText","The cards of both decks have been shuffled. You can no longer shuffle the decks...Click the screen to return to the game!");
+  
+  //reset game audio
+  audioOption=0;
+  gameAudioOption=0;
+  stopSound(gameAudio);
+  playSound(homeAudio,true);
+  //reset game variables
+  computer=10;
+  player=10;
+      //reset prints
+      setText("oCardNum","Cards: "+computer);
+      setText("pCardNum","Cards: "+ player);
+  turn=0;
+  oNum=0;
+  pNum=0;
+  
+  //reset leader board variables
+ 
+ 
+  totalTime=0;
+  currentSlot="";
+  
+  //clear player and computer hands
+  for(var i=0;i<playerValueHand.length;i++)
+  {
+    removeItem(playerValueHand,i);
+    removeItem(playerNameHand,i);
+    removeItem(playerImageHand,i);
+  }
+  
+  for(var j=0;j<computerValueHand.length;j++)
+  {
+    removeItem(computerValueHand,j);
+    removeItem(computerNameHand,j);
+    removeItem(computerImageHand,j);
+  }
+  
+  //reset the deck lists
+  
+  for(var n=0;n<valueTrash.length;n++)
+  {
+    
+    
+    appendItem(valueList,valueTrash[n]);
+    appendItem(nameList,nameTrash[n]);
+    appendItem(imageList,imageTrash[n]);
+    
+  }
+  
+  //remove from trash lists
+  
+  for(var g=0;g<valueTrash.length;g++)
+  {
+    removeItem(valueTrash,g);
+    removeItem(nameTrash,g);
+    removeItem(imageTrash,g);
+  }
+  
+  
+  console.log(valueTrash);
+  console.log(valueList);
+}
+
+
+//END OF CODE####################
